@@ -287,27 +287,31 @@ class MusicGenerationService(AIModelService):
         The weights determine the trust and incentive level the validator assigns to miner nodes on the network.
         """
 
-        # Check if scores contain any NaN values and log a warning if they do.
+        # Convert scores to a PyTorch tensor and check for NaN values
         weights = torch.tensor(scores)
         if torch.isnan(weights).any():
             bt.logging.warning(
                 "Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
             )
 
-        # Normalize scores to get raw weights.
+        # Normalize scores to get raw weights
         raw_weights = torch.nn.functional.normalize(weights, p=1, dim=0)
         bt.logging.info("raw_weights", raw_weights)
 
-        # Handle the case where uids might be NumPy arrays or PyTorch tensors
+        # Convert uids to a PyTorch tensor
         uids = torch.tensor(self.metagraph.uids)
 
         bt.logging.info("raw_weight_uids", uids)
 
         try:
-            # Process the raw weights and uids based on subnet limitations.
+            # Convert tensors to NumPy arrays for processing if required by the process_weights_for_netuid function
+            uids_np = uids.numpy() if isinstance(uids, torch.Tensor) else uids
+            raw_weights_np = raw_weights.numpy() if isinstance(raw_weights, torch.Tensor) else raw_weights
+
+            # Process the raw weights and uids based on subnet limitations
             (processed_weight_uids, processed_weights) = bt.utils.weight_utils.process_weights_for_netuid(
-                uids=uids,
-                weights=raw_weights,
+                uids=uids_np,  # Ensure this is a NumPy array
+                weights=raw_weights_np,  # Ensure this is a NumPy array
                 netuid=self.config.netuid,
                 subtensor=self.subtensor,
                 metagraph=self.metagraph,
@@ -317,14 +321,19 @@ class MusicGenerationService(AIModelService):
         except Exception as e:
             bt.logging.error(f"An error occurred while processing weights within update_weights: {e}")
             return
-        # Convert weights and uids to uint16 format for emission.
+
+        # Convert processed weights and uids back to PyTorch tensors if needed for further processing
+        processed_weight_uids = torch.tensor(processed_weight_uids) if isinstance(processed_weight_uids, np.ndarray) else processed_weight_uids
+        processed_weights = torch.tensor(processed_weights) if isinstance(processed_weights, np.ndarray) else processed_weights
+
+        # Convert weights and uids to uint16 format for emission
         uint_uids, uint_weights = bt.utils.weight_utils.convert_weights_and_uids_for_emit(
             uids=processed_weight_uids, weights=processed_weights
         )
         bt.logging.info("uint_weights", uint_weights)
         bt.logging.info("uint_uids", uint_uids)
 
-        # Set the weights on the Bittensor network.
+        # Set the weights on the Bittensor network
         try:
             result, msg = self.subtensor.set_weights(
                 wallet=self.wallet,
@@ -342,3 +351,5 @@ class MusicGenerationService(AIModelService):
                 bt.logging.error(f"Failed to set weights: {msg}")
         except Exception as e:
             bt.logging.error(f"An error occurred while setting weights: {e}")
+
+            
