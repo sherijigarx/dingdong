@@ -342,7 +342,7 @@ class MusicGenerationService(AIModelService):
                 weights=uint_weights,
                 wait_for_finalization=False,
                 wait_for_inclusion=False,
-                version_key=self.spec_version,
+                version_key=self.version,
             )
 
             if result:
@@ -352,4 +352,3 @@ class MusicGenerationService(AIModelService):
         except Exception as e:
             bt.logging.error(f"An error occurred while setting weights: {e}")
 
-            
