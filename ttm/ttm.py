@@ -48,7 +48,7 @@ class MusicGenerationService(AIModelService):
             try:
                 await self.main_loop_logic(step)
                 step += 1
-                if step % 100 == 0:
+                if step % 10 == 0:
                     self.metagraph.sync(subtensor=self.subtensor)
                     bt.logging.info(f"🔄 Syncing metagraph with subtensor.")
             except KeyboardInterrupt:
@@ -110,7 +110,7 @@ class MusicGenerationService(AIModelService):
     
     def update_block(self):
         self.current_block = self.subtensor.block
-        if self.current_block - self.last_updated_block > 120:
+        if self.current_block - self.last_updated_block > 10:
             bt.logging.info(f"Updating weights. Last update was at block: {self.last_updated_block}")
             bt.logging.info(f"Current block is for weight update is: {self.current_block}")
             self.update_weights(self.scores)
@@ -118,7 +118,7 @@ class MusicGenerationService(AIModelService):
         else:
             bt.logging.info(f"Updating weights. Last update was at block:  {self.last_updated_block}")
             bt.logging.info(f"Current block is: {self.current_block}")
-            bt.logging.info(f"Next update will be at block: {self.last_updated_block + 120}")
+            bt.logging.info(f"Next update will be at block: {self.last_updated_block + 10}")
             bt.logging.info(f"Skipping weight update. Last update was at block {self.last_updated_block}")
 
     def process_responses(self, filtered_axons, responses, prompt):
