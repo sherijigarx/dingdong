@@ -296,12 +296,19 @@ class MusicGenerationService(AIModelService):
         # Normalize scores to get raw weights.
         raw_weights = torch.nn.functional.normalize(scores, p=1, dim=0)
         bt.logging.debug("raw_weights", raw_weights)
-        bt.logging.debug("raw_weight_uids", self.metagraph.uids)
+
+        # Handle the case where uids might be NumPy arrays or PyTorch tensors
+        if isinstance(self.metagraph.uids, torch.Tensor):
+            uids = self.metagraph.uids.to("cpu")
+        else:
+            uids = self.metagraph.uids  # It's already a NumPy array
+
+        bt.logging.debug("raw_weight_uids", uids)
 
         # Process the raw weights and uids based on subnet limitations.
         processed_weight_uids, processed_weights = bt.utils.weight_utils.process_weights_for_netuid(
-            uids=self.metagraph.uids,
-            weights=raw_weights,
+            uids=uids,
+            weights=raw_weights.to("cpu"),
             netuid=self.config.netuid,
             subtensor=self.subtensor,
             metagraph=self.metagraph,
