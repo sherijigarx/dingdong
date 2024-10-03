@@ -35,7 +35,7 @@ class AIModelService:
             AIModelService._base_initialized = True
 
         if AIModelService._scores is None:
-            AIModelService._scores = self.metagraph.E.copy()
+            AIModelService._scores = self.metagraph.E.clone().detach()
         self.scores = AIModelService._scores
         self.uid = self.metagraph.hotkeys.index(self.wallet.hotkey.ss58_address)
 
