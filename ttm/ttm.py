@@ -301,8 +301,10 @@ class MusicGenerationService(AIModelService):
         # Handle the case where uids might be NumPy arrays or PyTorch tensors
         if isinstance(self.metagraph.uids, torch.Tensor):
             uids = self.metagraph.uids.to("cpu")
+            bt.logging.info("raw_weight_uids are tensor")
         else:
             uids = self.metagraph.uids  # It's already a NumPy array
+            bt.logging.info("raw_weight_uids are not tensor")
 
         bt.logging.info("raw_weight_uids", uids)
 
