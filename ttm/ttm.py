@@ -288,6 +288,7 @@ class MusicGenerationService(AIModelService):
         """
 
         # Check if scores contain any NaN values and log a warning if they do.
+        scores = torch.tensor(scores)
         if torch.isnan(scores).any():
             bt.logging.warning(
                 "Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
