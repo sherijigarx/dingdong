@@ -295,7 +295,7 @@ class MusicGenerationService(AIModelService):
 
         # Normalize scores to get raw weights.
         raw_weights = torch.nn.functional.normalize(scores, p=1, dim=0)
-        bt.logging.debug("raw_weights", raw_weights)
+        bt.logging.info("raw_weights", raw_weights)
 
         # Handle the case where uids might be NumPy arrays or PyTorch tensors
         if isinstance(self.metagraph.uids, torch.Tensor):
@@ -303,7 +303,7 @@ class MusicGenerationService(AIModelService):
         else:
             uids = self.metagraph.uids  # It's already a NumPy array
 
-        bt.logging.debug("raw_weight_uids", uids)
+        bt.logging.info("raw_weight_uids", uids)
 
         # Process the raw weights and uids based on subnet limitations.
         processed_weight_uids, processed_weights = bt.utils.weight_utils.process_weights_for_netuid(
@@ -313,15 +313,15 @@ class MusicGenerationService(AIModelService):
             subtensor=self.subtensor,
             metagraph=self.metagraph,
         )
-        bt.logging.debug("processed_weights", processed_weights)
-        bt.logging.debug("processed_weight_uids", processed_weight_uids)
+        bt.logging.info("processed_weights", processed_weights)
+        bt.logging.info("processed_weight_uids", processed_weight_uids)
 
         # Convert weights and uids to uint16 format for emission.
         uint_uids, uint_weights = bt.utils.weight_utils.convert_weights_and_uids_for_emit(
             uids=processed_weight_uids, weights=processed_weights
         )
-        bt.logging.debug("uint_weights", uint_weights)
-        bt.logging.debug("uint_uids", uint_uids)
+        bt.logging.info("uint_weights", uint_weights)
+        bt.logging.info("uint_uids", uint_uids)
 
         # Set the weights on the Bittensor network.
         try:
