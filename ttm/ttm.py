@@ -288,14 +288,14 @@ class MusicGenerationService(AIModelService):
         """
 
         # Check if scores contain any NaN values and log a warning if they do.
-        scores = torch.tensor(scores)
-        if torch.isnan(scores).any():
+        scores_tensor = torch.tensor(scores)
+        if torch.isnan(scores_tensor).any():
             bt.logging.warning(
                 "Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
             )
 
         # Normalize scores to get raw weights.
-        raw_weights = torch.nn.functional.normalize(scores, p=1, dim=0)
+        raw_weights = torch.nn.functional.normalize(scores_tensor, p=1, dim=0)
         bt.logging.info("raw_weights", raw_weights)
 
         # Handle the case where uids might be NumPy arrays or PyTorch tensors
@@ -306,17 +306,20 @@ class MusicGenerationService(AIModelService):
 
         bt.logging.info("raw_weight_uids", uids)
 
-        # Process the raw weights and uids based on subnet limitations.
-        processed_weight_uids, processed_weights = bt.utils.weight_utils.process_weights_for_netuid(
-            uids=uids,
-            weights=raw_weights.to("cpu"),
-            netuid=self.config.netuid,
-            subtensor=self.subtensor,
-            metagraph=self.metagraph,
-        )
-        bt.logging.info("processed_weights", processed_weights)
-        bt.logging.info("processed_weight_uids", processed_weight_uids)
-
+        try:
+            # Process the raw weights and uids based on subnet limitations.
+            (processed_weight_uids, processed_weights) = bt.utils.weight_utils.process_weights_for_netuid(
+                uids=uids,
+                weights=raw_weights.to("cpu"),
+                netuid=self.config.netuid,
+                subtensor=self.subtensor,
+                metagraph=self.metagraph,
+            )
+            bt.logging.info("processed_weights", processed_weights)
+            bt.logging.info("processed_weight_uids", processed_weight_uids)
+        except Exception as e:
+            bt.logging.error(f"An error occurred while processing weights: {e}")
+            return
         # Convert weights and uids to uint16 format for emission.
         uint_uids, uint_weights = bt.utils.weight_utils.convert_weights_and_uids_for_emit(
             uids=processed_weight_uids, weights=processed_weights
