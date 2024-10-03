@@ -310,7 +310,7 @@ class MusicGenerationService(AIModelService):
             # Process the raw weights and uids based on subnet limitations.
             (processed_weight_uids, processed_weights) = bt.utils.weight_utils.process_weights_for_netuid(
                 uids=uids,
-                weights=raw_weights.to("cpu"),
+                weights=raw_weights,
                 netuid=self.config.netuid,
                 subtensor=self.subtensor,
                 metagraph=self.metagraph,
@@ -318,7 +318,7 @@ class MusicGenerationService(AIModelService):
             bt.logging.info("processed_weights", processed_weights)
             bt.logging.info("processed_weight_uids", processed_weight_uids)
         except Exception as e:
-            bt.logging.error(f"An error occurred while processing weights: {e}")
+            bt.logging.error(f"An error occurred while processing weights within update_weights: {e}")
             return
         # Convert weights and uids to uint16 format for emission.
         uint_uids, uint_weights = bt.utils.weight_utils.convert_weights_and_uids_for_emit(
