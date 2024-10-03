@@ -288,14 +288,14 @@ class MusicGenerationService(AIModelService):
         """
 
         # Check if scores contain any NaN values and log a warning if they do.
-        scores = torch.tensor(scores)
-        if torch.isnan(scores).any():
+        weights = torch.tensor(scores)
+        if torch.isnan(weights).any():
             bt.logging.warning(
                 "Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
             )
 
         # Normalize scores to get raw weights.
-        raw_weights = torch.nn.functional.normalize(scores, p=1, dim=0)
+        raw_weights = torch.nn.functional.normalize(weights, p=1, dim=0)
         bt.logging.info("raw_weights", raw_weights)
 
         # Handle the case where uids might be NumPy arrays or PyTorch tensors
