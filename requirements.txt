@@ -1,0 +1,13 @@
+bittensor==7.4.0
+pydantic
+psutil
+GPUtil
+inflect
+huggingface_hub
+librosa
+torchaudio
+scipy
+transformers
+datasets
+wandb
+pyngrok
