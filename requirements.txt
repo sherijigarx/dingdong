@@ -16,7 +16,7 @@ cryptography
 pydantic==2.9.2
 starlette==0.38.6
 uvicorn==0.31.0
-fastapi==0.115.0
+fastapi
 pyngrok==7.2.0
 passlib==1.7.4
 SQLAlchemy==2.0.35
