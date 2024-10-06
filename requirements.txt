@@ -12,7 +12,7 @@ datasets
 wandb
 PyYAML==6.0.2
 requests==2.32.3
-cryptography==43.0.1
+cryptography
 pydantic==2.9.2
 starlette==0.38.6
 uvicorn==0.31.0
