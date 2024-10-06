@@ -1,12 +1,10 @@
-from huggingface_hub import hf_hub_download
+import torch
 import numpy as np
 import librosa
-import torch
 import torchaudio
-from scipy.signal import hilbert
+from huggingface_hub import hf_hub_download
 from audiocraft.metrics import CLAPTextConsistencyMetric
 import bittensor as bt
-
 
 class MetricEvaluator:
     @staticmethod
@@ -24,10 +22,6 @@ class MetricEvaluator:
 
     @staticmethod
     def calculate_hnr(file_path):
-        """
-        Harmonic to noise ratio is a measure of the relations between tone and noise.
-        A high value means less noise, a low value means more noise.
-        """
         y, _ = librosa.load(file_path, sr=None)
         if np.max(np.abs(y)) < 1e-4 or np.var(y) < 1e-2:
             return 0
@@ -43,6 +37,7 @@ class MetricEvaluator:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             pt_file = hf_hub_download(repo_id="lukewys/laion_clap", filename="music_audioset_epoch_15_esc_90.14.pt")
             clap_metric = CLAPTextConsistencyMetric(pt_file, model_arch='HTSAT-base').to(device)
+
             def convert_audio(audio, from_rate, to_rate, to_channels):
                 resampler = torchaudio.transforms.Resample(orig_freq=from_rate, new_freq=to_rate)
                 audio = resampler(audio)
@@ -63,7 +58,6 @@ class MetricEvaluator:
 class Normalizer:
     @staticmethod
     def normalize_quality(quality_metric):
-        # Normalize quality to be within 0 to 1, with good values above 20 dB considered as high quality
         return 1 / (1 + np.exp(-((quality_metric - 20) / 10)))
 
     @staticmethod
@@ -79,11 +73,10 @@ class Normalizer:
 
 class Aggregator:
     @staticmethod
-    def geometric_mean(scores):
-        """Calculate the geometric mean of the scores, avoiding any non-positive values."""
-        scores = [max(score, 0.0001) for score in scores.values()]  # Replace non-positive values to avoid math errors
-        product = np.prod(scores)
-        return product ** (1.0 / len(scores))
+    def weighted_average(scores, weights):
+        weighted_sum = sum(scores[key] * weights[key] for key in scores)
+        total_weight = sum(weights.values())
+        return weighted_sum / total_weight
 
 class MusicQualityEvaluator:
     def __init__(self):
@@ -104,7 +97,7 @@ class MusicQualityEvaluator:
             bt.logging.info(f'.......HNR......: {hnr_score} dB')
         except:
             pass
-            bt.logging.error(f"Failed to calculate SNR")
+            bt.logging.error(f"Failed to calculate HNR")
 
         try:
             consistency_score = self.metric_evaluator.calculate_consistency(file_path, text)
@@ -113,13 +106,24 @@ class MusicQualityEvaluator:
             pass
             bt.logging.error(f"Failed to calculate Consistency score")
 
-        # Normalize scores and calculate aggregate score
+        # Normalize scores
         normalized_snr = self.normalizer.normalize_quality(snr_score)
         normalized_hnr = self.normalizer.normalize_quality(hnr_score)
         normalized_consistency = self.normalizer.normalize_consistency(consistency_score)
 
-        bt.logging.info(f'Normalized Metrics: SNR = {normalized_snr}dB, Normalized Metrics: HNR = {normalized_hnr}dB, Consistency = {normalized_consistency}')
-        aggregate_quality = self.aggregator.geometric_mean({'snr': normalized_snr, 'hnr': normalized_hnr})
-        aggregate_score = self.aggregator.geometric_mean({'quality': aggregate_quality, 'normalized_consistency': normalized_consistency}) if consistency_score > 0.2 else 0
-        bt.logging.info(f'....... Aggregate Score ......: {aggregate_score}')
+        bt.logging.info(f'Normalized Metrics: SNR = {normalized_snr}, HNR = {normalized_hnr}, Consistency = {normalized_consistency}')
+
+        # Calculate weighted average
+        scores = {
+            'snr': normalized_snr,
+            'hnr': normalized_hnr,
+            'consistency': normalized_consistency
+        }
+        weights = {
+            'snr': 15,
+            'hnr': 15,
+            'consistency': 70
+        }
+        aggregate_score = self.aggregator.weighted_average(scores, weights)
+        bt.logging.info(f'....... Aggregate Weighted Score ......: {aggregate_score}')
         return aggregate_score

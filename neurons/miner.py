@@ -1,5 +1,6 @@
 import os
 import sys
+import lib 
 import time
 import torch
 import typing
@@ -111,6 +112,12 @@ def main(config):
         if synapse.dendrite.hotkey not in metagraph.hotkeys:
             bt.logging.trace(f"Blacklisting unrecognized hotkey {synapse.dendrite.hotkey}")
             return True, "Unrecognized hotkey"
+        elif synapse.dendrite.hotkey in metagraph.hotkeys and metagraph.S[metagraph.hotkeys.index(synapse.dendrite.hotkey)] < lib.MIN_STAKE:
+            # Ignore requests from entities with low stake.
+            bt.logging.trace(
+                f"Blacklisting hotkey {synapse.dendrite.hotkey} with low stake"
+            )
+            return True, "Low stake"
         else:
             return False, "Accepted"
 

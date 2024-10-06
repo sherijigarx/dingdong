@@ -6,3 +6,4 @@ __spec_version__ = (
     + (1 * int(version_split[2]))
 )
 
+MIN_STAKE = 10000
