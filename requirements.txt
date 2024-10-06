@@ -9,7 +9,7 @@ scipy
 transformers
 datasets
 wandb
-laion_clap==1.1.4
+# laion_clap==1.1.4
 # PyYAML==6.0.2
 # requests==2.32.3
 # cryptography
