@@ -154,7 +154,7 @@ def main(config):
             sampling_rate = 32000
             write_wav("musicgen_out.wav", rate=sampling_rate, data=music)
             bt.logging.success("Music generated and saved to musicgen_out.wav")
-            music_tensor = convert_music_to_tensor("musicgen_out.wav")
+            music_tensor = convert_music_to_tensor("neurons/musicgen_out.wav")
             synapse.music_output = music_tensor
             return synapse
         except Exception as e:
