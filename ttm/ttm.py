@@ -10,7 +10,7 @@ import contextlib
 import traceback
 import asyncio
 import hashlib
-import datetime
+from datetime import datetime
 import random
 import torch
 import wandb
